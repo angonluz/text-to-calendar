@@ -42,7 +42,7 @@
       font-size: 1.8em;
     }
 
-    /* ********** AJUSTES DE ESPAÇAMENTO ********** */
+    /* ********** INÍCIO DOS AJUSTES DE ESPAÇAMENTO ********** */
     textarea, input:not([type="checkbox"]) {
       width: 100%;
       padding: 10px 12px;
@@ -127,23 +127,13 @@
         min-width: 0; 
         flex-basis: 50%; 
         box-sizing: border-box;
+        /* ********** INÍCIO: AJUSTE DE ALTURA PARA SAFARI ********** */
         /* Força a altura mínima, resolvendo o problema de "pequenininha" */
         min-height: 40px; 
         /* Remove a aparência nativa no modo desktop para melhor consistência, mantendo no mobile */
         -webkit-appearance: none; 
+        /* ********** FIM: AJUSTE DE ALTURA PARA SAFARI ********** */
     }
-
-    /* ********** NOVO: Estilo para o placeholder/texto em datetime-local ********** */
-    /* Garante que o texto digitado seja escuro */
-    .datetime-row input[type="datetime-local"] {
-        color: #1e293b; /* Cor do texto padrão */
-    }
-
-    /* Estilo para placeholder quando o campo está vazio (iOS/Safari) */
-    .datetime-row input[type="datetime-local"]:not([value]):valid {
-        color: #94a3b8; /* Cor do texto de dica (placeholder) */
-    }
-    /* ********** FIM: Estilo para o placeholder/texto em datetime-local ********** */
 
 
     .buttons {
@@ -233,8 +223,8 @@
     </div>
 
     <div class="datetime-row">
-      <input type="datetime-local" id="start" placeholder="Data e hora de Início">
-      <input type="datetime-local" id="end" placeholder="Data e hora de Fim">
+      <input type="datetime-local" id="start" placeholder="Início">
+      <input type="datetime-local" id="end" placeholder="Fim">
     </div>
 
     <textarea id="details" rows="3" placeholder="Detalhes..."></textarea>
