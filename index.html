@@ -6,7 +6,7 @@
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#3b82f6">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <title>Gerador de Evento - Google Calendar</title>
+  <title>Text 2 Calendar</title> 
   <style>
     /* Estilos Gerais (Mantidos) */
     html, body {
@@ -42,6 +42,7 @@
       font-size: 1.8em;
     }
 
+    /* Ajustes para inputs e textareas */
     textarea, input {
       width: 100%;
       padding: 10px 12px;
@@ -58,21 +59,20 @@
       box-shadow: 0 0 0 2px rgba(59,130,246,0.2);
     }
 
-    /* --- INÍCIO: Ajuste do Checkbox e Label (Alinhamento Vertical) --- */
+    /* Estilo do checkbox (Mantido e ajustado no código anterior) */
     .checkbox-row {
       display: flex;
       align-items: center;
       margin-bottom: 16px;
       font-weight: 600;
       color: #334155;
-      /* Removido gap: 8px; e line-height: 1; desnecessários/problemáticos */
     }
 
     .checkbox-row label {
       cursor: pointer;
-      display: flex; /* Para alinhar o input e o texto dentro do label */
+      display: flex;
       align-items: center;
-      gap: 8px; /* Espaço entre o checkbox e o texto */
+      gap: 8px;
     }
 
     .checkbox-row input[type="checkbox"] {
@@ -84,7 +84,7 @@
       position: relative;
       cursor: pointer;
       flex-shrink: 0;
-      margin: 0; /* Remove margem padrão que atrapalhava o alinhamento */
+      margin: 0;
     }
 
     .checkbox-row input[type="checkbox"]:checked {
@@ -96,14 +96,12 @@
       position: absolute;
       color: white;
       font-size: 13px;
-      /* Ajuste fino para centralizar o checkmark */
       left: 50%;
       top: 50%;
       transform: translate(-50%, -50%);
     }
-    /* --- FIM: Ajuste do Checkbox e Label --- */
 
-    /* Campos lado a lado (Data e Hora) */
+    /* Campos lado a lado */
     .datetime-row {
       display: flex;
       gap: 10px;
@@ -112,8 +110,21 @@
 
     .datetime-row input {
       flex: 1;
-      min-width: 0; /* evita quebra por overflow */
+      min-width: 0; /* Essencial para que inputs flexíveis não quebrem a linha */
+      /* Adicionar esta linha para forçar o Safari a respeitar o flexbox no input type=datetime-local */
+      -webkit-appearance: none; 
     }
+    
+    /* Regra específica para corrigir o input datetime-local no Safari/iOS */
+    .datetime-row input[type="datetime-local"] {
+        /* Garante que o input não tenha um tamanho mínimo que force a quebra */
+        min-width: 0; 
+        /* Define a largura mínima como 1/2 do espaço disponível */
+        flex-basis: 50%; 
+        /* Garante que não haja quebra por padding/border */
+        box-sizing: border-box;
+    }
+
 
     .buttons {
       display: flex;
@@ -173,16 +184,20 @@
         border-radius: 0;
       }
 
-      /* Manter os campos de data/hora empilhados em telas pequenas */
+      /* Voltar para coluna em telas pequenas */
       .datetime-row {
         flex-direction: column;
+      }
+      /* Remove a anulação de aparência para evitar problemas em coluna */
+      .datetime-row input[type="datetime-local"] {
+        -webkit-appearance: initial;
       }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Gerador de Evento do Google Calendar</h1>
+    <h1>Text 2 Calendar</h1>
 
     <textarea id="raw" rows="6" placeholder="Cole aqui o texto do evento..."></textarea>
     <button id="parseBtn" style="background:#64748b;color:white;width:100%;margin-bottom:20px;">🔍 Extrair dados com IA</button>
@@ -230,7 +245,6 @@
       const disabled = allDayEl.checked;
       startEl.disabled = disabled;
       endEl.disabled = disabled;
-      // Adicionar e remover o atributo 'required' para melhor UX/validação
       if (disabled) {
           startEl.removeAttribute('required');
           endEl.removeAttribute('required');
@@ -239,7 +253,6 @@
           endEl.setAttribute('required', 'required');
       }
     });
-    // Inicializar o estado do allDay
     allDayEl.dispatchEvent(new Event('change'));
 
 
@@ -250,8 +263,6 @@
       output.textContent = "⏳ Analisando texto com IA...";
 
       try {
-        // Alerta: A URL 'https://extract-gemini.angonluz.workers.dev' é um endpoint externo
-        // e não posso garantir seu funcionamento ou segurança.
         const resp = await fetch("https://extract-gemini.angonluz.workers.dev", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -267,7 +278,6 @@
 
         allDayEl.checked = !!data.all_day;
         
-        // Disparar o evento de mudança para atualizar os campos de data/hora
         allDayEl.dispatchEvent(new Event('change'));
 
         if (data.date) {
@@ -291,9 +301,6 @@
       let url = "";
 
       if (allDayEl.checked) {
-        // No modo "Dia inteiro", se a data final não for fornecida,
-        // o Google Calendar usa o mesmo dia para o final, então usamos a data inicial + 1 dia
-        // para garantir que o evento seja exibido corretamente como "dia inteiro".
         const startDateString = startEl.value ? startEl.value.substring(0, 10) : "";
         if (!title || !startDateString) {
           output.textContent = "❌ Preencha pelo menos o título e a data de início para um evento de dia inteiro.";
@@ -302,9 +309,6 @@
         
         const startDateClean = startDateString.replace(/-/g, "");
         
-        // A data de fim é **exclusiva** no formato de dia inteiro do Google,
-        // então precisa ser a data de início + 1 dia para um evento de 1 dia.
-        // Se a data de fim for preenchida, usamos ela + 1 dia.
         let endDateString = endEl.value ? endEl.value.substring(0, 10) : startDateString;
         
         let dateObj = new Date(endDateString);
@@ -327,7 +331,7 @@
         url = `https://calendar.google.com/calendar/u/0/r/eventedit?text=${title}&dates=${start}/${end}&details=${details}&location=${location}&ctz=America/Sao_Paulo`;
       }
 
-      output.textContent = "URL gerada com sucesso!"; // Limpa a mensagem de erro anterior
+      output.textContent = "URL gerada com sucesso!"; 
       generatedUrl = url;
       return url;
     }
@@ -344,7 +348,6 @@
         await navigator.clipboard.writeText(url);
         output.textContent = "📋 URL copiada para a área de transferência!";
       } catch {
-        // Se a cópia falhar, exibe o link para que o usuário copie manualmente
         output.innerHTML = `⚠️ Não foi possível copiar automaticamente. Copie manualmente:<br><span style="font-size: smaller; word-break: break-all;">${url}</span>`;
       }
     });
