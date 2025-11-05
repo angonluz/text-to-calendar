@@ -29,9 +29,9 @@
       max-width: 600px;
       width: 100%;
       box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-      transition: 0.3s;
       display: flex;
       flex-direction: column;
+      transition: 0.3s;
     }
 
     h1 {
@@ -57,21 +57,46 @@
       box-shadow: 0 0 0 2px rgba(59,130,246,0.2);
     }
 
-    /* Checkbox alinhado */
+    /* Checkbox alinhado corretamente */
     .checkbox-row {
       display: flex;
       align-items: center;
       gap: 8px;
-      margin-bottom: 12px;
+      margin-bottom: 16px;
       font-weight: 600;
       color: #334155;
+      line-height: 1; /* força alinhamento vertical */
+    }
+
+    .checkbox-row label {
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
     .checkbox-row input[type="checkbox"] {
+      appearance: none;
       width: 18px;
       height: 18px;
-      accent-color: #3b82f6;
+      border: 2px solid #3b82f6;
+      border-radius: 4px;
+      position: relative;
       cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .checkbox-row input[type="checkbox"]:checked {
+      background-color: #3b82f6;
+    }
+
+    .checkbox-row input[type="checkbox"]:checked::after {
+      content: "✓";
+      position: absolute;
+      color: white;
+      font-size: 13px;
+      left: 3px;
+      top: 0px;
     }
 
     /* Campos lado a lado */
@@ -83,6 +108,7 @@
 
     .datetime-row input {
       flex: 1;
+      min-width: 0; /* evita quebra por overflow */
     }
 
     .buttons {
@@ -160,13 +186,15 @@
     <input id="location" placeholder="Local">
 
     <div class="checkbox-row">
-      <input type="checkbox" id="allDay">
-      <label for="allDay">Dia inteiro</label>
+      <label for="allDay">
+        <input type="checkbox" id="allDay">
+        Dia inteiro
+      </label>
     </div>
 
     <div class="datetime-row">
-      <input type="datetime-local" id="start">
-      <input type="datetime-local" id="end">
+      <input type="datetime-local" id="start" placeholder="Início">
+      <input type="datetime-local" id="end" placeholder="Fim">
     </div>
 
     <textarea id="details" rows="3" placeholder="Detalhes..."></textarea>
