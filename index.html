@@ -42,16 +42,23 @@
       font-size: 1.8em;
     }
 
-    /* Ajustes para inputs e textareas */
-    textarea, input {
+    /* ********** INÍCIO DOS AJUSTES DE ESPAÇAMENTO ********** */
+    textarea, input:not([type="checkbox"]) {
       width: 100%;
       padding: 10px 12px;
-      margin: 8px 0 16px;
+      /* Margem ajustada: apenas 8px abaixo para reduzir o espaço vertical */
+      margin: 8px 0; 
       border-radius: 8px;
       border: 1px solid #cbd5e1;
       font-size: 15px;
       box-sizing: border-box;
     }
+    
+    /* Aumentar a margem apenas para os elementos que não estão em uma linha flexível */
+    #title, #location, #details, #raw {
+        margin-bottom: 16px; 
+    }
+    /* ********** FIM DOS AJUSTES DE ESPAÇAMENTO ********** */
 
     textarea:focus, input:focus {
       outline: none;
@@ -59,11 +66,11 @@
       box-shadow: 0 0 0 2px rgba(59,130,246,0.2);
     }
 
-    /* Estilo do checkbox (Mantido e ajustado no código anterior) */
+    /* Estilo do checkbox (Mantido) */
     .checkbox-row {
       display: flex;
       align-items: center;
-      margin-bottom: 16px;
+      margin: 16px 0; /* Ajustei a margem para separar do campo de localização */
       font-weight: 600;
       color: #334155;
     }
@@ -106,23 +113,26 @@
       display: flex;
       gap: 10px;
       width: 100%;
+      /* Reduzir a margem vertical do container inteiro */
+      margin-bottom: 16px; 
     }
 
     .datetime-row input {
       flex: 1;
-      min-width: 0; /* Essencial para que inputs flexíveis não quebrem a linha */
-      /* Adicionar esta linha para forçar o Safari a respeitar o flexbox no input type=datetime-local */
-      -webkit-appearance: none; 
+      min-width: 0; 
     }
     
     /* Regra específica para corrigir o input datetime-local no Safari/iOS */
     .datetime-row input[type="datetime-local"] {
-        /* Garante que o input não tenha um tamanho mínimo que force a quebra */
         min-width: 0; 
-        /* Define a largura mínima como 1/2 do espaço disponível */
         flex-basis: 50%; 
-        /* Garante que não haja quebra por padding/border */
         box-sizing: border-box;
+        /* ********** INÍCIO: AJUSTE DE ALTURA PARA SAFARI ********** */
+        /* Força a altura mínima, resolvendo o problema de "pequenininha" */
+        min-height: 40px; 
+        /* Remove a aparência nativa no modo desktop para melhor consistência, mantendo no mobile */
+        -webkit-appearance: none; 
+        /* ********** FIM: AJUSTE DE ALTURA PARA SAFARI ********** */
     }
 
 
@@ -188,7 +198,7 @@
       .datetime-row {
         flex-direction: column;
       }
-      /* Remove a anulação de aparência para evitar problemas em coluna */
+      /* Permite a aparência nativa no modo mobile para melhor usabilidade */
       .datetime-row input[type="datetime-local"] {
         -webkit-appearance: initial;
       }
@@ -228,7 +238,7 @@
   </div>
 
   <script>
-    // Todo o JavaScript original foi mantido e funcional
+    // JS Mantido
     const raw = document.getElementById("raw");
     const parseBtn = document.getElementById("parseBtn");
     const titleEl = document.getElementById("title");
