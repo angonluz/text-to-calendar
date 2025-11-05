@@ -57,19 +57,32 @@
       box-shadow: 0 0 0 2px rgba(59,130,246,0.2);
     }
 
-    label {
+    /* Checkbox alinhado */
+    .checkbox-row {
       display: flex;
       align-items: center;
-      flex-wrap: wrap;
-      gap: 6px;
+      gap: 8px;
+      margin-bottom: 12px;
       font-weight: 600;
       color: #334155;
-      margin-bottom: 12px;
     }
 
-    label input[type="checkbox"] {
-      transform: scale(1.2);
+    .checkbox-row input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
       accent-color: #3b82f6;
+      cursor: pointer;
+    }
+
+    /* Campos lado a lado */
+    .datetime-row {
+      display: flex;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .datetime-row input {
+      flex: 1;
     }
 
     .buttons {
@@ -130,14 +143,8 @@
         border-radius: 0;
       }
 
-      label {
-        flex-direction: row;
-        align-items: center;
-        font-size: 15px;
-      }
-
-      label input[type="checkbox"] {
-        transform: scale(1.1);
+      .datetime-row {
+        flex-direction: column;
       }
     }
   </style>
@@ -152,12 +159,16 @@
     <input id="title" placeholder="Título do evento">
     <input id="location" placeholder="Local">
 
-    <label for="allDay">
-      <input type="checkbox" id="allDay"> Dia inteiro
-    </label>
+    <div class="checkbox-row">
+      <input type="checkbox" id="allDay">
+      <label for="allDay">Dia inteiro</label>
+    </div>
 
-    <input type="datetime-local" id="start">
-    <input type="datetime-local" id="end">
+    <div class="datetime-row">
+      <input type="datetime-local" id="start">
+      <input type="datetime-local" id="end">
+    </div>
+
     <textarea id="details" rows="3" placeholder="Detalhes..."></textarea>
 
     <div class="buttons">
