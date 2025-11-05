@@ -3,84 +3,114 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Gerador de URL do Google Calendar</title>
+  <title>Gerador de Evento - Google Calendar</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      margin: 40px auto;
-      max-width: 600px;
-      background: #fafafa;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    h1 { text-align: center; }
-    textarea, input, button {
-      width: 100%;
-      padding: 10px;
-      margin: 8px 0;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      font-size: 16px;
-    }
-    button {
-      background: #007bff;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-    button:hover { background: #0056b3; }
-    .output {
-      background: #fff;
-      padding: 10px;
-      border-radius: 6px;
-      font-size: 14px;
-      word-wrap: break-word;
-    }
-    .btn-group {
+      font-family: "Inter", Arial, sans-serif;
+      background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+      margin: 0;
+      padding: 40px 20px;
       display: flex;
-      gap: 10px;
+      justify-content: center;
     }
-    .btn-group button {
-      flex: 1;
+    .container {
+      background: #fff;
+      border-radius: 16px;
+      padding: 30px;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+      transition: 0.3s;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #1e293b;
+      font-size: 1.8em;
+    }
+    textarea, input {
+      width: 100%;
+      padding: 10px 12px;
+      margin: 8px 0 16px;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      font-size: 15px;
+      box-sizing: border-box;
+    }
+    textarea:focus, input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 2px rgba(59,130,246,0.2);
     }
     label {
       display: flex;
       align-items: center;
-      gap: 6px;
-      font-weight: bold;
+      gap: 8px;
+      font-weight: 600;
+      color: #334155;
+    }
+    .buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    button {
+      flex: 1;
+      border: none;
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 16px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: 0.2s;
+    }
+    #addBtn {
+      background: #3b82f6;
+      color: white;
+    }
+    #addBtn:hover {
+      background: #2563eb;
+    }
+    #copyBtn {
+      background: #10b981;
+      color: white;
+    }
+    #copyBtn:hover {
+      background: #059669;
+    }
+    .output {
+      background: #f9fafb;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 10px;
+      margin-top: 20px;
+      font-size: 14px;
+      color: #475569;
+      word-break: break-word;
     }
   </style>
 </head>
 <body>
-  <h1>Gerador de Evento do Google Calendar</h1>
+  <div class="container">
+    <h1>Gerador de Evento do Google Calendar</h1>
 
-  <p><b>Texto do evento:</b></p>
-  <textarea id="raw" rows="8" placeholder="Cole aqui o texto do evento"></textarea>
-  <button id="parseBtn">Extrair dados com IA</button>
+    <textarea id="raw" rows="6" placeholder="Cole aqui o texto do evento..."></textarea>
+    <button id="parseBtn" style="background:#64748b;color:white;width:100%;margin-bottom:20px;">🔍 Extrair dados com IA</button>
 
-  <p><b>Título:</b></p>
-  <input id="title" placeholder="Título do evento">
-  <p><b>Local:</b></p>
-  <input id="location" placeholder="Local do evento">
+    <input id="title" placeholder="Título do evento">
+    <input id="location" placeholder="Local">
+    <label><input type="checkbox" id="allDay"> Dia inteiro</label>
+    <input type="datetime-local" id="start">
+    <input type="datetime-local" id="end">
+    <textarea id="details" rows="3" placeholder="Detalhes..."></textarea>
 
-  <label><input type="checkbox" id="allDay"> Dia inteiro</label>
+    <div class="buttons">
+      <button id="addBtn">📅 Adicionar ao Google Calendar</button>
+      <button id="copyBtn">📋 Copiar URL</button>
+    </div>
 
-  <p><b>Início:</b></p>
-  <input type="datetime-local" id="start">
-  <p><b>Término:</b></p>
-  <input type="datetime-local" id="end">
-  <p><b>Detalhes:</b></p>
-  <textarea id="details" rows="4"></textarea>
-
-  <div class="btn-group">
-    <button id="generateBtn">Gerar URL</button>
-    <button id="addBtn">Adicionar ao Google Calendar</button>
-    <button id="copyBtn">Copiar link</button>
+    <div class="output" id="output"></div>
   </div>
-
-  <h3>Resultado:</h3>
-  <div class="output" id="output"></div>
 
   <script>
     const raw = document.getElementById("raw");
@@ -95,7 +125,6 @@
 
     let generatedUrl = "";
 
-    // Ativa/desativa campos de hora se "Dia inteiro" estiver marcado
     allDayEl.addEventListener("change", () => {
       const disabled = allDayEl.checked;
       startEl.disabled = disabled;
@@ -122,15 +151,9 @@
         locationEl.value = data.location || "";
         detailsEl.value = data.details || text;
 
-        if (data.all_day) {
-          allDayEl.checked = true;
-          startEl.disabled = true;
-          endEl.disabled = true;
-        } else {
-          allDayEl.checked = false;
-          startEl.disabled = false;
-          endEl.disabled = false;
-        }
+        allDayEl.checked = !!data.all_day;
+        startEl.disabled = allDayEl.checked;
+        endEl.disabled = allDayEl.checked;
 
         if (data.date) {
           const start = data.start_time || "09:00";
@@ -153,7 +176,6 @@
       let url = "";
 
       if (allDayEl.checked) {
-        // Evento de dia inteiro: formato YYYYMMDD/YYYYMMDD
         const date = startEl.value ? startEl.value.substring(0, 10).replace(/-/g, "") : "";
         const nextDay = endEl.value ? endEl.value.substring(0, 10).replace(/-/g, "") : date;
         if (!title || !date) {
@@ -162,7 +184,6 @@
         }
         url = `https://calendar.google.com/calendar/u/0/r/eventedit?text=${title}&dates=${date}/${nextDay}&details=${details}&location=${location}&ctz=America/Sao_Paulo`;
       } else {
-        // Evento com horário
         const start = startEl.value.replace(/[-:]/g, "").replace("T", "");
         const end = endEl.value.replace(/[-:]/g, "").replace("T", "");
         if (!title || !start || !end) {
@@ -177,8 +198,6 @@
       return url;
     }
 
-    document.getElementById("generateBtn").addEventListener("click", buildCalendarUrl);
-
     document.getElementById("addBtn").addEventListener("click", () => {
       const url = buildCalendarUrl();
       if (url) window.open(url, "_blank");
@@ -189,7 +208,7 @@
       if (!url) return;
       try {
         await navigator.clipboard.writeText(url);
-        output.innerHTML += "<br>📋 Link copiado para a área de transferência!";
+        output.innerHTML += "<br>📋 URL copiada para a área de transferência!";
       } catch {
         output.innerHTML += "<br>⚠️ Não foi possível copiar automaticamente. Copie manualmente o link acima.";
       }
