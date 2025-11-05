@@ -3,16 +3,25 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#3b82f6">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
   <title>Gerador de Evento - Google Calendar</title>
   <style>
-    body {
+    html, body {
+      height: 100%;
+      margin: 0;
       font-family: "Inter", Arial, sans-serif;
       background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
-      margin: 0;
-      padding: 40px 20px;
+    }
+
+    body {
       display: flex;
       justify-content: center;
+      align-items: center;
+      padding: 20px;
     }
+
     .container {
       background: #fff;
       border-radius: 16px;
@@ -21,13 +30,17 @@
       width: 100%;
       box-shadow: 0 8px 20px rgba(0,0,0,0.08);
       transition: 0.3s;
+      display: flex;
+      flex-direction: column;
     }
+
     h1 {
       text-align: center;
       margin-bottom: 20px;
       color: #1e293b;
       font-size: 1.8em;
     }
+
     textarea, input {
       width: 100%;
       padding: 10px 12px;
@@ -37,23 +50,35 @@
       font-size: 15px;
       box-sizing: border-box;
     }
+
     textarea:focus, input:focus {
       outline: none;
       border-color: #3b82f6;
       box-shadow: 0 0 0 2px rgba(59,130,246,0.2);
     }
+
     label {
       display: flex;
       align-items: center;
-      gap: 8px;
+      flex-wrap: wrap;
+      gap: 6px;
       font-weight: 600;
       color: #334155;
+      margin-bottom: 12px;
     }
+
+    label input[type="checkbox"] {
+      transform: scale(1.2);
+      accent-color: #3b82f6;
+    }
+
     .buttons {
       display: flex;
       gap: 10px;
       margin-top: 10px;
+      flex-wrap: wrap;
     }
+
     button {
       flex: 1;
       border: none;
@@ -64,6 +89,7 @@
       font-weight: 600;
       transition: 0.2s;
     }
+
     #addBtn {
       background: #3b82f6;
       color: white;
@@ -78,6 +104,7 @@
     #copyBtn:hover {
       background: #059669;
     }
+
     .output {
       background: #f9fafb;
       border: 1px solid #e2e8f0;
@@ -87,6 +114,31 @@
       font-size: 14px;
       color: #475569;
       word-break: break-word;
+      min-height: 30px;
+    }
+
+    /* Responsividade */
+    @media (max-width: 600px) {
+      body {
+        align-items: flex-start;
+        padding: 20px 10px;
+      }
+
+      .container {
+        padding: 20px;
+        box-shadow: none;
+        border-radius: 0;
+      }
+
+      label {
+        flex-direction: row;
+        align-items: center;
+        font-size: 15px;
+      }
+
+      label input[type="checkbox"] {
+        transform: scale(1.1);
+      }
     }
   </style>
 </head>
@@ -99,7 +151,11 @@
 
     <input id="title" placeholder="Título do evento">
     <input id="location" placeholder="Local">
-    <label><input type="checkbox" id="allDay"> Dia inteiro</label>
+
+    <label for="allDay">
+      <input type="checkbox" id="allDay"> Dia inteiro
+    </label>
+
     <input type="datetime-local" id="start">
     <input type="datetime-local" id="end">
     <textarea id="details" rows="3" placeholder="Detalhes..."></textarea>
@@ -194,7 +250,6 @@
       }
 
       generatedUrl = url;
-      
       return url;
     }
 
@@ -213,6 +268,16 @@
         output.innerHTML = "<br>⚠️ Não foi possível copiar automaticamente. Copie manualmente o link acima.";
       }
     });
+  </script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker
+          .register("./sw.js")
+          .then(() => console.log("✅ Service Worker registrado."))
+          .catch((err) => console.error("Service Worker erro:", err));
+      });
+    }
   </script>
 </body>
 </html>
