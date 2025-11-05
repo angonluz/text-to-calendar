@@ -1,196 +1,120 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Gerador de URL para Google Calendar</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gerador de URL do Google Calendar</title>
   <style>
-    :root{font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;}
-    body{max-width:920px;margin:32px auto;padding:18px;font-size:16px;color:#111}
-    h1{font-size:1.4rem;margin:0 0 12px}
-    label{display:block;margin-top:10px;font-weight:600}
-    textarea,input,select{width:100%;box-sizing:border-box;padding:8px;border-radius:8px;border:1px solid #ddd;font-size:15px}
-    textarea{min-height:150px;resize:vertical}
-    .row{display:flex;gap:12px}
-    .col{flex:1}
-    button{margin-top:12px;padding:10px 14px;border-radius:8px;border:0;background:#2563eb;color:white;cursor:pointer}
-    .actions{display:flex;gap:8px;align-items:center}
-    .output{margin-top:12px;padding:10px;border-radius:8px;background:#f3f4f6;border:1px solid #e5e7eb;word-break:break-all}
-    .hint{font-size:13px;color:#555;margin-top:6px}
-    .small{font-size:13px;color:#666}
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px auto;
+      max-width: 600px;
+      background: #fafafa;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h1 { text-align: center; }
+    textarea, input, button {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover { background: #0056b3; }
+    .output { background: #fff; padding: 10px; border-radius: 6px; font-size: 14px; }
   </style>
 </head>
 <body>
-  <h1>Gerador de URL para Google Calendar</h1>
-  <p class="small">Cole um texto de convite no bloco abaixo e clique em <strong>Extrair</strong> (melhor esforço). Ajuste os campos se necessário e clique em <strong>Gerar URL</strong>.</p>
+  <h1>Gerador de Evento do Google Calendar</h1>
 
-  <label for="raw">Colar texto do convite / mensagem</label>
-  <textarea id="raw" placeholder="Cole aqui o texto do convite, por exemplo:\nPré Wedding Flá&Lipe 💐\nData: 28/12\nLocal: Rua Bento Martins, 175, Alvorada\n..." ></textarea>
-  <div class="actions">
-    <button id="parseBtn">Extrair do texto</button>
-    <button id="clearBtn" style="background:#ef4444">Limpar</button>
-  </div>
+  <p><b>Texto do evento:</b></p>
+  <textarea id="raw" rows="8" placeholder="Cole aqui o texto do evento"></textarea>
+  <button id="parseBtn">Extrair dados com IA</button>
 
-  <label for="title">Título do evento</label>
-  <input id="title" placeholder="Título do evento" />
+  <p><b>Título:</b></p>
+  <input id="title" placeholder="Título do evento">
+  <p><b>Local:</b></p>
+  <input id="location" placeholder="Local do evento">
+  <p><b>Início:</b></p>
+  <input type="datetime-local" id="start">
+  <p><b>Término:</b></p>
+  <input type="datetime-local" id="end">
+  <p><b>Detalhes:</b></p>
+  <textarea id="details" rows="4"></textarea>
 
-  <div class="row">
-    <div class="col">
-      <label for="start">Data / Início</label>
-      <input id="start" type="datetime-local" />
-    </div>
-    <div class="col">
-      <label for="end">Data / Fim</label>
-      <input id="end" type="datetime-local" />
-    </div>
-  </div>
+  <button id="generateBtn">Gerar URL do Google Calendar</button>
 
-  <label for="allDay"><input id="allDay" type="checkbox" /> Evento o dia todo (all-day)</label>
-
-  <label for="location">Local (endereço)</label>
-  <input id="location" placeholder="Rua, número, cidade" />
-
-  <label for="details">Descrição / Detalhes</label>
-  <textarea id="details" placeholder="Coloque aqui a descrição que irá para o campo 'detalhes' do Google Calendar"></textarea>
-
-  <label for="ctz">Fuso horário (ctz)</label>
-  <select id="ctz">
-    <option value="America/Sao_Paulo" selected>America/Sao_Paulo</option>
-    <option value="UTC">UTC</option>
-  </select>
-
-  <div class="actions">
-    <button id="gen">Gerar URL</button>
-    <button id="open" style="background:#10b981">Abrir no Calendar</button>
-    <button id="copy" style="background:#6b7280">Copiar URL</button>
-  </div>
-
-  <div class="output" id="out">URL gerada aparecerá aqui</div>
+  <h3>Resultado:</h3>
+  <div class="output" id="output"></div>
 
   <script>
-    // util: format Date -> Google format (UTC Z)
-    function pad(n, width=2){return String(n).padStart(width,'0')}
-    function toGoogleDateTimeUTC(d, allDay){
-      if(!d) return ''
-      if(allDay){
-        // return YYYYMMDD (local date used)
-        return d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())
-      }
-      return d.getUTCFullYear()+pad(d.getUTCMonth()+1)+pad(d.getUTCDate())+'T'+pad(d.getUTCHours())+pad(d.getUTCMinutes())+pad(d.getUTCSeconds())+'Z'
-    }
+    const raw = document.getElementById("raw");
+    const parseBtn = document.getElementById("parseBtn");
+    const titleEl = document.getElementById("title");
+    const locationEl = document.getElementById("location");
+    const startEl = document.getElementById("start");
+    const endEl = document.getElementById("end");
+    const detailsEl = document.getElementById("details");
+    const output = document.getElementById("output");
 
-    function encode(s){return encodeURIComponent(s||'')}
-
-    function buildUrl(opts){
-      const base = 'https://calendar.google.com/calendar/u/0/r/eventedit'
-      const text = opts.title || ''
-      const loc = opts.location || ''
-      const details = opts.details || ''
-      const ctz = opts.ctz || 'America/Sao_Paulo'
-      const dates = opts.allDay ? (opts.startDateStr + '/' + opts.endDateStr) : (opts.startUTC + '/' + opts.endUTC)
-      const params = `?text=${encode(text)}&dates=${dates}&details=${encode(details)}&location=${encode(loc)}&ctz=${encode(ctz)}`
-      return base + params
-    }
-
-    // UI bindings
-    const raw = document.getElementById('raw')
-    const parseBtn = document.getElementById('parseBtn')
-    const clearBtn = document.getElementById('clearBtn')
-    const titleEl = document.getElementById('title')
-    const startEl = document.getElementById('start')
-    const endEl = document.getElementById('end')
-    const locationEl = document.getElementById('location')
-    const detailsEl = document.getElementById('details')
-    const ctzEl = document.getElementById('ctz')
-    const genBtn = document.getElementById('gen')
-    const out = document.getElementById('out')
-    const copyBtn = document.getElementById('copy')
-    const openBtn = document.getElementById('open')
-    const allDayEl = document.getElementById('allDay')
-
-    clearBtn.addEventListener('click', ()=>{
-      raw.value=''; titleEl.value=''; startEl.value=''; endEl.value=''; locationEl.value=''; detailsEl.value=''; out.textContent='URL gerada aparecerá aqui'
-    })
-
-    // try to extract title/date/location/description from pasted text (best effort)
-    parseBtn.addEventListener('click', async () => {
+    parseBtn.addEventListener("click", async () => {
       const text = raw.value.trim();
-      if (!text) return alert("Cole o texto do evento primeiro.");
-    
-      out.textContent = "Analisando texto com IA (Gemini via Cloudflare)... aguarde ⏳";
-    
+      if (!text) return alert("Cole o texto do evento primeiro!");
+
+      output.textContent = "⏳ Analisando texto com IA...";
+
       try {
-        const resp = await fetch("https://SEUWORKER.subdomain.workers.dev", { // substitua pela URL do Worker
+        const resp = await fetch("https://extract-gemini.angonluz.workers.dev", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text }),
+          body: JSON.stringify({ text })
         });
-    
+
         if (!resp.ok) throw new Error("Erro: " + resp.status);
         const data = await resp.json();
-    
+
         titleEl.value = data.title || "";
         locationEl.value = data.location || "";
         detailsEl.value = data.details || text;
-    
+
         if (data.date) {
           const start = data.start_time || "11:00";
           const end = data.end_time || "15:00";
           startEl.value = `${data.date}T${start}`;
           endEl.value = `${data.date}T${end}`;
         }
-    
-        out.textContent = "Extração concluída com sucesso ✅";
+
+        output.textContent = `✅ Extração concluída (${data._daily_count || 0}/${data._daily_limit || "∞"} chamadas usadas hoje)`;
       } catch (err) {
         console.error(err);
-        out.textContent = "Erro ao usar o Gemini.";
+        output.textContent = "❌ Erro ao usar o Gemini.";
       }
     });
 
+    document.getElementById("generateBtn").addEventListener("click", () => {
+      const title = encodeURIComponent(titleEl.value);
+      const location = encodeURIComponent(locationEl.value);
+      const details = encodeURIComponent(detailsEl.value);
+      const start = startEl.value.replace(/[-:]/g, "").replace("T", ""); // YYYYMMDDTHHMMSS
+      const end = endEl.value.replace(/[-:]/g, "").replace("T", "");
 
-    genBtn.addEventListener('click', ()=>{
-      const title = titleEl.value || 'Evento'
-      const location = locationEl.value
-      const details = detailsEl.value
-      const ctz = ctzEl.value
-      const allDay = allDayEl.checked
-      if(!startEl.value){ return alert('Preencha a data/hora de início.') }
-      if(!endEl.value){ return alert('Preencha a data/hora de término.') }
-      const startDate = new Date(startEl.value)
-      const endDate = new Date(endEl.value)
-      let startUTC = toGoogleDateTimeUTC(startDate, allDay)
-      let endUTC = toGoogleDateTimeUTC(endDate, allDay)
-      let startDateStr = '', endDateStr = ''
-      if(allDay){
-        // Google expects end date to be the day after for all-day multi-day events; but we'll use given end date as inclusive and add +1 day to end
-        const sd = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate())
-        const ed = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate())
-        // make end exclusive
-        ed.setDate(ed.getDate()+1)
-        startDateStr = toGoogleDateTimeUTC(sd, true)
-        endDateStr = toGoogleDateTimeUTC(ed, true)
+      if (!title || !start || !end) {
+        output.textContent = "❌ Preencha pelo menos o título e os horários.";
+        return;
       }
-      const opts = {
-        title, location, details, ctz, allDay,
-        startUTC, endUTC, startDateStr, endDateStr
-      }
-      const url = buildUrl(opts)
-      out.textContent = url
-      out.dataset.url = url
-    })
 
-    copyBtn.addEventListener('click', async ()=>{
-      const url = out.dataset.url
-      if(!url) return alert('Gere a URL primeiro.')
-      try{ await navigator.clipboard.writeText(url); alert('URL copiada para a área de transferência!') } catch(e){ prompt('Copie manualmente:', url) }
-    })
-
-    openBtn.addEventListener('click', ()=>{
-      const url = out.dataset.url
-      if(!url) return alert('Gere a URL primeiro.')
-      window.open(url, '_blank')
-    })
-
+      const url = `https://calendar.google.com/calendar/u/0/r/eventedit?text=${title}&dates=${start}/${end}&details=${details}&location=${location}&ctz=America/Sao_Paulo`;
+      output.innerHTML = `<a href="${url}" target="_blank">${url}</a>`;
+    });
   </script>
 </body>
 </html>
