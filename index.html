@@ -30,7 +30,26 @@
       cursor: pointer;
     }
     button:hover { background: #0056b3; }
-    .output { background: #fff; padding: 10px; border-radius: 6px; font-size: 14px; }
+    .output {
+      background: #fff;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 14px;
+      word-wrap: break-word;
+    }
+    .btn-group {
+      display: flex;
+      gap: 10px;
+    }
+    .btn-group button {
+      flex: 1;
+    }
+    label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
@@ -44,6 +63,9 @@
   <input id="title" placeholder="Título do evento">
   <p><b>Local:</b></p>
   <input id="location" placeholder="Local do evento">
+
+  <label><input type="checkbox" id="allDay"> Dia inteiro</label>
+
   <p><b>Início:</b></p>
   <input type="datetime-local" id="start">
   <p><b>Término:</b></p>
@@ -51,7 +73,11 @@
   <p><b>Detalhes:</b></p>
   <textarea id="details" rows="4"></textarea>
 
-  <button id="generateBtn">Gerar URL do Google Calendar</button>
+  <div class="btn-group">
+    <button id="generateBtn">Gerar URL</button>
+    <button id="addBtn">Adicionar ao Google Calendar</button>
+    <button id="copyBtn">Copiar link</button>
+  </div>
 
   <h3>Resultado:</h3>
   <div class="output" id="output"></div>
@@ -64,7 +90,17 @@
     const startEl = document.getElementById("start");
     const endEl = document.getElementById("end");
     const detailsEl = document.getElementById("details");
+    const allDayEl = document.getElementById("allDay");
     const output = document.getElementById("output");
+
+    let generatedUrl = "";
+
+    // Ativa/desativa campos de hora se "Dia inteiro" estiver marcado
+    allDayEl.addEventListener("change", () => {
+      const disabled = allDayEl.checked;
+      startEl.disabled = disabled;
+      endEl.disabled = disabled;
+    });
 
     parseBtn.addEventListener("click", async () => {
       const text = raw.value.trim();
@@ -86,9 +122,19 @@
         locationEl.value = data.location || "";
         detailsEl.value = data.details || text;
 
+        if (data.all_day) {
+          allDayEl.checked = true;
+          startEl.disabled = true;
+          endEl.disabled = true;
+        } else {
+          allDayEl.checked = false;
+          startEl.disabled = false;
+          endEl.disabled = false;
+        }
+
         if (data.date) {
-          const start = data.start_time || "11:00";
-          const end = data.end_time || "15:00";
+          const start = data.start_time || "09:00";
+          const end = data.end_time || "17:00";
           startEl.value = `${data.date}T${start}`;
           endEl.value = `${data.date}T${end}`;
         }
@@ -100,20 +146,53 @@
       }
     });
 
-    document.getElementById("generateBtn").addEventListener("click", () => {
+    function buildCalendarUrl() {
       const title = encodeURIComponent(titleEl.value);
       const location = encodeURIComponent(locationEl.value);
       const details = encodeURIComponent(detailsEl.value);
-      const start = startEl.value.replace(/[-:]/g, "").replace("T", ""); // YYYYMMDDTHHMMSS
-      const end = endEl.value.replace(/[-:]/g, "").replace("T", "");
+      let url = "";
 
-      if (!title || !start || !end) {
-        output.textContent = "❌ Preencha pelo menos o título e os horários.";
-        return;
+      if (allDayEl.checked) {
+        // Evento de dia inteiro: formato YYYYMMDD/YYYYMMDD
+        const date = startEl.value ? startEl.value.substring(0, 10).replace(/-/g, "") : "";
+        const nextDay = endEl.value ? endEl.value.substring(0, 10).replace(/-/g, "") : date;
+        if (!title || !date) {
+          output.textContent = "❌ Preencha pelo menos o título e a data.";
+          return "";
+        }
+        url = `https://calendar.google.com/calendar/u/0/r/eventedit?text=${title}&dates=${date}/${nextDay}&details=${details}&location=${location}&ctz=America/Sao_Paulo`;
+      } else {
+        // Evento com horário
+        const start = startEl.value.replace(/[-:]/g, "").replace("T", "");
+        const end = endEl.value.replace(/[-:]/g, "").replace("T", "");
+        if (!title || !start || !end) {
+          output.textContent = "❌ Preencha pelo menos o título e os horários.";
+          return "";
+        }
+        url = `https://calendar.google.com/calendar/u/0/r/eventedit?text=${title}&dates=${start}/${end}&details=${details}&location=${location}&ctz=America/Sao_Paulo`;
       }
 
-      const url = `https://calendar.google.com/calendar/u/0/r/eventedit?text=${title}&dates=${start}/${end}&details=${details}&location=${location}&ctz=America/Sao_Paulo`;
+      generatedUrl = url;
       output.innerHTML = `<a href="${url}" target="_blank">${url}</a>`;
+      return url;
+    }
+
+    document.getElementById("generateBtn").addEventListener("click", buildCalendarUrl);
+
+    document.getElementById("addBtn").addEventListener("click", () => {
+      const url = buildCalendarUrl();
+      if (url) window.open(url, "_blank");
+    });
+
+    document.getElementById("copyBtn").addEventListener("click", async () => {
+      const url = buildCalendarUrl();
+      if (!url) return;
+      try {
+        await navigator.clipboard.writeText(url);
+        output.innerHTML += "<br>📋 Link copiado para a área de transferência!";
+      } catch {
+        output.innerHTML += "<br>⚠️ Não foi possível copiar automaticamente. Copie manualmente o link acima.";
+      }
     });
   </script>
 </body>
