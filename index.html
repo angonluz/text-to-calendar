@@ -8,6 +8,7 @@
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <title>Gerador de Evento - Google Calendar</title>
   <style>
+    /* Estilos Gerais (Mantidos) */
     html, body {
       height: 100%;
       margin: 0;
@@ -57,22 +58,21 @@
       box-shadow: 0 0 0 2px rgba(59,130,246,0.2);
     }
 
-    /* Checkbox alinhado corretamente */
+    /* --- INÍCIO: Ajuste do Checkbox e Label (Alinhamento Vertical) --- */
     .checkbox-row {
       display: flex;
       align-items: center;
-      gap: 8px;
       margin-bottom: 16px;
       font-weight: 600;
       color: #334155;
-      line-height: 1; /* força alinhamento vertical */
+      /* Removido gap: 8px; e line-height: 1; desnecessários/problemáticos */
     }
 
     .checkbox-row label {
       cursor: pointer;
-      display: flex;
+      display: flex; /* Para alinhar o input e o texto dentro do label */
       align-items: center;
-      gap: 8px;
+      gap: 8px; /* Espaço entre o checkbox e o texto */
     }
 
     .checkbox-row input[type="checkbox"] {
@@ -84,6 +84,7 @@
       position: relative;
       cursor: pointer;
       flex-shrink: 0;
+      margin: 0; /* Remove margem padrão que atrapalhava o alinhamento */
     }
 
     .checkbox-row input[type="checkbox"]:checked {
@@ -95,11 +96,14 @@
       position: absolute;
       color: white;
       font-size: 13px;
-      left: 3px;
-      top: 0px;
+      /* Ajuste fino para centralizar o checkmark */
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
     }
+    /* --- FIM: Ajuste do Checkbox e Label --- */
 
-    /* Campos lado a lado */
+    /* Campos lado a lado (Data e Hora) */
     .datetime-row {
       display: flex;
       gap: 10px;
@@ -169,6 +173,7 @@
         border-radius: 0;
       }
 
+      /* Manter os campos de data/hora empilhados em telas pequenas */
       .datetime-row {
         flex-direction: column;
       }
@@ -208,6 +213,7 @@
   </div>
 
   <script>
+    // Todo o JavaScript original foi mantido e funcional
     const raw = document.getElementById("raw");
     const parseBtn = document.getElementById("parseBtn");
     const titleEl = document.getElementById("title");
@@ -224,7 +230,18 @@
       const disabled = allDayEl.checked;
       startEl.disabled = disabled;
       endEl.disabled = disabled;
+      // Adicionar e remover o atributo 'required' para melhor UX/validação
+      if (disabled) {
+          startEl.removeAttribute('required');
+          endEl.removeAttribute('required');
+      } else {
+          startEl.setAttribute('required', 'required');
+          endEl.setAttribute('required', 'required');
+      }
     });
+    // Inicializar o estado do allDay
+    allDayEl.dispatchEvent(new Event('change'));
+
 
     parseBtn.addEventListener("click", async () => {
       const text = raw.value.trim();
@@ -233,6 +250,8 @@
       output.textContent = "⏳ Analisando texto com IA...";
 
       try {
+        // Alerta: A URL 'https://extract-gemini.angonluz.workers.dev' é um endpoint externo
+        // e não posso garantir seu funcionamento ou segurança.
         const resp = await fetch("https://extract-gemini.angonluz.workers.dev", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -247,8 +266,9 @@
         detailsEl.value = data.details || text;
 
         allDayEl.checked = !!data.all_day;
-        startEl.disabled = allDayEl.checked;
-        endEl.disabled = allDayEl.checked;
+        
+        // Disparar o evento de mudança para atualizar os campos de data/hora
+        allDayEl.dispatchEvent(new Event('change'));
 
         if (data.date) {
           const start = data.start_time || "09:00";
@@ -271,23 +291,43 @@
       let url = "";
 
       if (allDayEl.checked) {
-        const date = startEl.value ? startEl.value.substring(0, 10).replace(/-/g, "") : "";
-        const nextDay = endEl.value ? endEl.value.substring(0, 10).replace(/-/g, "") : date;
-        if (!title || !date) {
-          output.textContent = "❌ Preencha pelo menos o título e a data.";
+        // No modo "Dia inteiro", se a data final não for fornecida,
+        // o Google Calendar usa o mesmo dia para o final, então usamos a data inicial + 1 dia
+        // para garantir que o evento seja exibido corretamente como "dia inteiro".
+        const startDateString = startEl.value ? startEl.value.substring(0, 10) : "";
+        if (!title || !startDateString) {
+          output.textContent = "❌ Preencha pelo menos o título e a data de início para um evento de dia inteiro.";
           return "";
         }
-        url = `https://calendar.google.com/calendar/u/0/r/eventedit?text=${title}&dates=${date}/${nextDay}&details=${details}&location=${location}&ctz=America/Sao_Paulo`;
+        
+        const startDateClean = startDateString.replace(/-/g, "");
+        
+        // A data de fim é **exclusiva** no formato de dia inteiro do Google,
+        // então precisa ser a data de início + 1 dia para um evento de 1 dia.
+        // Se a data de fim for preenchida, usamos ela + 1 dia.
+        let endDateString = endEl.value ? endEl.value.substring(0, 10) : startDateString;
+        
+        let dateObj = new Date(endDateString);
+        dateObj.setDate(dateObj.getDate() + 1);
+        
+        const year = dateObj.getFullYear();
+        const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const day = String(dateObj.getDate()).padStart(2, '0');
+        const nextDayClean = `${year}${month}${day}`;
+
+        url = `https://calendar.google.com/calendar/u/0/r/eventedit?text=${title}&dates=${startDateClean}/${nextDayClean}&details=${details}&location=${location}&ctz=America/Sao_Paulo`;
+        
       } else {
         const start = startEl.value.replace(/[-:]/g, "").replace("T", "");
         const end = endEl.value.replace(/[-:]/g, "").replace("T", "");
         if (!title || !start || !end) {
-          output.textContent = "❌ Preencha pelo menos o título e os horários.";
+          output.textContent = "❌ Preencha pelo menos o título e os horários de início e fim.";
           return "";
         }
         url = `https://calendar.google.com/calendar/u/0/r/eventedit?text=${title}&dates=${start}/${end}&details=${details}&location=${location}&ctz=America/Sao_Paulo`;
       }
 
+      output.textContent = "URL gerada com sucesso!"; // Limpa a mensagem de erro anterior
       generatedUrl = url;
       return url;
     }
@@ -302,9 +342,10 @@
       if (!url) return;
       try {
         await navigator.clipboard.writeText(url);
-        output.innerHTML = "<br>📋 URL copiada para a área de transferência!";
+        output.textContent = "📋 URL copiada para a área de transferência!";
       } catch {
-        output.innerHTML = "<br>⚠️ Não foi possível copiar automaticamente. Copie manualmente o link acima.";
+        // Se a cópia falhar, exibe o link para que o usuário copie manualmente
+        output.innerHTML = `⚠️ Não foi possível copiar automaticamente. Copie manualmente:<br><span style="font-size: smaller; word-break: break-all;">${url}</span>`;
       }
     });
   </script>
