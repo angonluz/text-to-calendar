@@ -208,9 +208,9 @@
       if (!url) return;
       try {
         await navigator.clipboard.writeText(url);
-        output.innerHTML += "<br>📋 URL copiada para a área de transferência!";
+        output.innerHTML = "<br>📋 URL copiada para a área de transferência!";
       } catch {
-        output.innerHTML += "<br>⚠️ Não foi possível copiar automaticamente. Copie manualmente o link acima.";
+        output.innerHTML = "<br>⚠️ Não foi possível copiar automaticamente. Copie manualmente o link acima.";
       }
     });
   </script>
