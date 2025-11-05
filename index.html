@@ -113,80 +113,40 @@
     })
 
     // try to extract title/date/location/description from pasted text (best effort)
-    parseBtn.addEventListener('click', ()=>{
-      const text = raw.value.trim()
-      if(!text) return alert('Cole o texto do convite primeiro.')
-      const lines = text.split(/\r?\n/).map(l=>l.trim()).filter(Boolean)
-      // title: first line
-      titleEl.value = lines[0] || ''
-      // details: full text
-      detailsEl.value = text
-      // find date (dd/mm or dd/mm/yyyy)
-      const dateRegex = /(\b\d{1,2}\/\d{1,2}(?:\/\d{2,4})?\b)/
-      let foundDate = null
-      for(const l of lines){
-        const m = l.match(dateRegex)
-        if(m){ foundDate = m[1]; break }
-      }
-      // try to find time like HH:MM or hH
-      const timeRegex = /(\b\d{1,2}:\d{2}\b)/
-      let foundTime = null
-      for(const l of lines){
-        const m = l.match(timeRegex)
-        if(m){ foundTime = m[1]; break }
-      }
-      // location: line starting with Local or containing Rua/Avenida
-      let foundLoc = ''
-      for(const l of lines){
-        if(/^Local[:\s]/i.test(l) || /\bRua\b|\bAvenida\b|\bAv\b|\bR\.|\bAlameda\b/i.test(l)){
-          foundLoc = l.replace(/^Local[:\s-]*/i,'')
-          break
+    parseBtn.addEventListener('click', async () => {
+      const text = raw.value.trim();
+      if (!text) return alert("Cole o texto do evento primeiro.");
+    
+      out.textContent = "Analisando texto com IA (Gemini via Cloudflare)... aguarde ⏳";
+    
+      try {
+        const resp = await fetch("https://SEUWORKER.subdomain.workers.dev", { // substitua pela URL do Worker
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text }),
+        });
+    
+        if (!resp.ok) throw new Error("Erro: " + resp.status);
+        const data = await resp.json();
+    
+        titleEl.value = data.title || "";
+        locationEl.value = data.location || "";
+        detailsEl.value = data.details || text;
+    
+        if (data.date) {
+          const start = data.start_time || "11:00";
+          const end = data.end_time || "15:00";
+          startEl.value = `${data.date}T${start}`;
+          endEl.value = `${data.date}T${end}`;
         }
+    
+        out.textContent = "Extração concluída com sucesso ✅";
+      } catch (err) {
+        console.error(err);
+        out.textContent = "Erro ao usar o Gemini.";
       }
-      if(foundLoc) locationEl.value = foundLoc
+    });
 
-      // set start/end inputs
-      const now = new Date()
-      const yearNow = now.getFullYear()
-      if(foundDate){
-        // parse dd/mm or dd/mm/yyyy
-        const parts = foundDate.split('/')
-        let d = parseInt(parts[0],10)
-        let m = parseInt(parts[1],10)
-        let y = parts[2] ? parseInt(parts[2],10) : yearNow
-        if(y < 100) y += 2000
-        // if date already passed this year and no year provided, assume next year
-        if(!parts[2]){
-          const cand = new Date(y, m-1, d)
-          if(cand < now) y = y + 1
-        }
-        // time
-        let hh = 11, mm = 0
-        if(foundTime){ const tparts = foundTime.split(':'); hh = parseInt(tparts[0],10); mm = parseInt(tparts[1],10) }
-        const startDate = new Date(y, m-1, d, hh, mm, 0)
-        // default end 4 hours later
-        const endDate = new Date(startDate.getTime() + 4*60*60*1000)
-        // set inputs value in local datetime format YYYY-MM-DDTHH:MM
-        function localInputVal(dt){
-          const s = dt.getFullYear() + '-' + pad(dt.getMonth()+1) + '-' + pad(dt.getDate()) + 'T' + pad(dt.getHours()) + ':' + pad(dt.getMinutes())
-          return s
-        }
-        startEl.value = localInputVal(startDate)
-        endEl.value = localInputVal(endDate)
-      } else {
-        // no date found: leave blank but set default today 11:00
-        const s = new Date(); s.setHours(11,0,0,0)
-        const e = new Date(s.getTime() + 4*60*60*1000)
-        function localInputVal(dt){
-          const s = dt.getFullYear() + '-' + pad(dt.getMonth()+1) + '-' + pad(dt.getDate()) + 'T' + pad(dt.getHours()) + ':' + pad(dt.getMinutes())
-          return s
-        }
-        startEl.value = localInputVal(s)
-        endEl.value = localInputVal(e)
-      }
-
-      alert('Extração concluída. Ajuste os campos se necessário e clique em "Gerar URL".')
-    })
 
     genBtn.addEventListener('click', ()=>{
       const title = titleEl.value || 'Evento'
