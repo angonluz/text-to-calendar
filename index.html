@@ -332,14 +332,15 @@
         url = `https://calendar.google.com/calendar/u/0/r/eventedit?text=${title}&dates=${startDateClean}/${nextDayClean}&details=${details}&location=${location}&ctz=America/Sao_Paulo`;
         
       } else {
-        const start = startEl.value.replace(/[-:]/g, "").replace("T", "");
-        const end = endEl.value.replace(/[-:]/g, "").replace("T", "");
+        const start = startEl.value.replace(/[-:]/g, ""); // keep T
+        const end = endEl.value.replace(/[-:]/g, "");     // keep T
         if (!title || !start || !end) {
           output.textContent = "❌ Preencha pelo menos o título e os horários de início e fim.";
           return "";
         }
         url = `https://calendar.google.com/calendar/u/0/r/eventedit?text=${title}&dates=${start}/${end}&details=${details}&location=${location}&ctz=America/Sao_Paulo`;
       }
+
 
       output.textContent = "URL gerada com sucesso!"; 
       generatedUrl = url;
