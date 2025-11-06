@@ -303,6 +303,25 @@
         output.textContent = "❌ Erro ao usar o Gemini.";
       }
     });
+    function formatToGoogleDateTime(datetimeValue) {
+      // Example input: "2025-12-12T15:00"
+      if (!datetimeValue) return "";
+      
+      // Split into date and time
+      const [datePart, timePart] = datetimeValue.split("T");
+      if (!datePart) return "";
+      
+      // Remove dashes from date
+      const dateClean = datePart.replace(/-/g, "");
+      
+      // Handle time (add seconds if missing)
+      let timeClean = (timePart || "00:00:00").replace(/:/g, "");
+      if (timeClean.length === 4) timeClean += "00"; // e.g. "1500" → "150000"
+      else if (timeClean.length === 2) timeClean += "0000"; // e.g. "15" → "150000"
+      
+      return `${dateClean}T${timeClean}`;
+    }
+
 
     function buildCalendarUrl() {
       const title = encodeURIComponent(titleEl.value);
@@ -332,14 +351,15 @@
         url = `https://calendar.google.com/calendar/u/0/r/eventedit?text=${title}&dates=${startDateClean}/${nextDayClean}&details=${details}&location=${location}&ctz=America/Sao_Paulo`;
         
       } else {
-        const start = startEl.value.replace(/[-:]/g, ""); // keep T
-        const end = endEl.value.replace(/[-:]/g, "");     // keep T
+        const start = formatToGoogleDateTime(startEl.value);
+        const end = formatToGoogleDateTime(endEl.value);
         if (!title || !start || !end) {
           output.textContent = "❌ Preencha pelo menos o título e os horários de início e fim.";
           return "";
         }
         url = `https://calendar.google.com/calendar/u/0/r/eventedit?text=${title}&dates=${start}/${end}&details=${details}&location=${location}&ctz=America/Sao_Paulo`;
       }
+
 
 
       output.textContent = "URL gerada com sucesso!"; 
